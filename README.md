@@ -1,8 +1,8 @@
 # daysync
 
-바이브코딩으로 업무용 플래너 만들기 강의 슬라이드의 독립형 HTML 복사본입니다.
+바이브코딩으로 업무용 플래너 만들기 강의와 연결된 완성 예시를 정적 HTML로 보관합니다.
 
-## 보기
-- index.html을 브라우저에서 열면 37개 슬라이드를 볼 수 있습니다.
-- GitHub Pages 배포 시 저장소의 **Settings → Pages**에서 **Deploy from a branch**, main / root를 선택하세요.
-- 원본 완성 예시 플래너는 원본 강의 서버를 연결합니다.
+- `index.html`: 강의 슬라이드 전체 37장
+- `planner/index.html`: 강의에서 연결하는 업무 플래너 완성 예시
+
+GitHub Pages는 저장소의 **Settings → Pages**에서 **Deploy from a branch**, `main` / root로 배포합니다. 업무 항목은 브라우저 localStorage에만 저장됩니다. 외부 참고 링크와 네이버 캘린더 링크는 인터넷 연결이 필요합니다.
