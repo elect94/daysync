@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Google AI Studio 교육의 완성 예시. 업무 등록, 우선순위, 마감일, 완료, 브라우저 저장과 캘린더 일정 추가.">
+<title>내 업무 플래너 · 완성 예시</title>
+<style>
+:root{--blue:#246bfd;--ink:#1c2535;--muted:#778295;--line:#e8edf4;--bg:#f6f8fb;--red:#bd4436}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;letter-spacing:-.035em}
+button,input,select{font:inherit}
+button,a,input{touch-action:manipulation}
+button{cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #f2b948;outline-offset:3px}
+a{color:var(--blue);text-decoration:none}
+button{color:var(--ink)}
+.shell{display:grid;grid-template-columns:238px minmax(0,1fr);min-height:100vh}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:34px 22px 24px;display:flex;flex-direction:column;position:sticky;top:0;height:100dvh}
+.logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;letter-spacing:-.6px}
+.logo-icon{width:34px;height:34px;display:grid;place-items:center;background:var(--blue);color:white;border-radius:11px;font-size:21px}
+.sidebar-caption{font-size:11px;color:#8b97aa;letter-spacing:1.3px;margin:42px 12px 14px}
+.nav{display:grid;gap:7px}
+.nav button{background:none;border:0;display:flex;gap:12px;align-items:center;text-align:left;padding:12px 14px;border-radius:10px;color:#657184;font-size:14px}
+.nav button:hover{background:#f5f7fb}
+.nav button.active{background:#edf3ff;color:var(--blue);font-weight:700}
+.nav button svg{width:18px;height:18px}
+.nav button .count{margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums;color:inherit}
+.side-bottom{margin-top:auto;padding:24px 8px 0}
+.side-note{border-top:1px solid var(--line);padding-top:20px;font-size:12px;color:var(--muted);line-height:1.8}
+.side-note strong{color:#4a586c;font-weight:600}
+.side-bottom>a{display:flex;gap:8px;font-size:13px;margin-bottom:20px}
+.main{min-width:0}
+.topbar{height:76px;padding:0 42px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:#fff9;gap:15px}
+.breadcrumb{font-size:13px;color:var(--muted)}
+.breadcrumb span{margin:0 9px;color:#c4cbd6}
+.save-indicator{display:flex;align-items:center;gap:7px;font-size:12px;color:#66788b;white-space:nowrap}
+.save-dot{width:6px;height:6px;border-radius:50%;background:#4a9a77}
+.page{padding:40px 42px;max-width:1500px;margin:auto}
+.hero{display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+.date{font-size:13px;color:var(--muted);margin:0 0 10px}
+.hero h1{font-size:34px;letter-spacing:-1.5px;line-height:1.35;margin:0;font-weight:750}
+.subtitle{font-size:14px;color:var(--muted);margin:12px 0 0}
+.course-tag{font-size:11px;border:1px solid #dce6f6;background:#f0f5fe;padding:6px 10px;color:#5774a5;border-radius:6px;margin-top:8px;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:17px;margin:28px 0}
+.stat{padding:21px 24px;border:1px solid var(--line);border-radius:14px;background:white;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.stat-label{font-size:13px;color:var(--muted);margin-bottom:7px}
+.stat strong{font-size:32px;line-height:1.2;letter-spacing:-1px}
+.stat-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:var(--blue);background:#edf3ff}
+.stat-icon svg{width:21px;height:21px}
+.stat.urgent .stat-icon{color:#c6763b;background:#fff4ea}
+.stat.urgent strong{color:#ba6431}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
+.panel{background:white;border:1px solid var(--line);border-radius:16px;min-width:0;overflow:hidden}
+.list-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:23px 24px 19px}
+.list-header h2{font-size:18px;margin:0;letter-spacing:-.6px}
+.list-header h2 span{font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}
+.sort{background:#fff;border:1px solid #e7ecf3;color:#637086;border-radius:7px;padding:6px 9px;font-size:12px;max-width:135px}
+.list-hint{margin:0;padding:0 24px 17px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)}
+.task{padding:20px 24px;border-bottom:1px solid #eef1f6;display:grid;grid-template-columns:22px minmax(0,1fr);gap:14px}
+.task:last-child{border-bottom:0}
+.done-check{appearance:none;-webkit-appearance:none;width:21px;height:21px;border:1.6px solid #d3dce8;border-radius:7px;cursor:pointer;display:grid;place-items:center;margin:3px 0 0;background:white;flex-shrink:0}
+.done-check:hover{border-color:var(--blue)}
+.done-check:checked{background:var(--blue);border-color:var(--blue)}
+.done-check:checked:after{content:'✓';color:#fff;font-size:14px;font-weight:700}
+.task-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.task-title{font-weight:650;font-size:15px;overflow-wrap:anywhere;line-height:1.65;min-width:0}
+.task.done .task-title{text-decoration:line-through;color:#95a0b0}
+.priority{font-size:10px;font-weight:650;padding:3px 8px;border-radius:5px;white-space:nowrap;flex-shrink:0;letter-spacing:-.1px}
+.priority.high{color:#b96935;background:#fff2e8}
+.priority.medium{color:#4c78bc;background:#edf3ff}
+.priority.low{color:#718197;background:#f0f3f7}
+.task-meta{display:flex;gap:9px;align-items:center;margin:8px 0 11px;flex-wrap:wrap;font-size:11px;color:#8a95a5}
+.task-meta .status{font-weight:600}
+.status.overdue{color:var(--red)}
+.status.today{color:var(--blue)}
+.status.complete{color:#6d8f78}
+.sample{font-size:10px;color:#8999b0;border:1px solid #e5eaf2;border-radius:4px;padding:0 4px}
+.task-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.task-actions a,.task-actions button{font-size:11px;padding:1px 0;border:0;background:none;color:#7b899e;display:flex;align-items:center;gap:5px}
+.task-actions svg{width:12px;height:12px}
+.task-actions a{color:#5f7ca8}
+.task-actions a:hover,.task-actions button:hover{color:var(--blue)}
+.task-actions .delete:hover{color:var(--red)}
+.task-actions button:disabled{opacity:1;color:#a2acbb;font-size:10px}
+.form-panel{padding:24px}
+.form-panel h2{font-size:18px;margin:0 0 6px;letter-spacing:-.6px}
+.form-desc{font-size:12px;color:var(--muted);margin:0 0 24px}
+.field{margin-bottom:20px}
+.field>label,.field>legend{font-size:12px;color:#536075;font-weight:650;display:block;margin-bottom:9px}
+.field label small{font-weight:400;color:#95a0af;margin-left:5px}
+input[type=text],input[type=date]{width:100%;min-width:0;border:1px solid #e2e8f1;border-radius:8px;padding:11px 12px;color:var(--ink);background:#fff;font-size:13px;height:44px}
+input::placeholder{color:#a6b0bf}
+fieldset{padding:0;border:0;min-width:0}
+.priority-options{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.priority-options label{position:relative;cursor:pointer;text-align:center}
+.priority-options input{position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;margin:0;cursor:pointer}
+.priority-options span{display:block;padding:9px 5px;border:1px solid #e5eaf1;border-radius:8px;font-size:12px;color:#8893a3}
+.priority-options input:checked+span{border-color:#92b5fd;background:#f0f5ff;color:var(--blue);font-weight:650}
+.priority-options input:focus-visible+span{outline:3px solid #f2b948;outline-offset:3px}
+.add{width:100%;border:0;border-radius:9px;background:var(--blue);color:white;font-size:13px;font-weight:650;padding:13px 16px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 8px #246bfd16}
+.add:hover{background:#175ce4}
+.cancel-edit{width:100%;border:0;background:none;padding:12px;color:var(--muted);font-size:12px}
+.form-hint{font-size:11px;color:#9aa5b5;line-height:1.75;margin:16px 0 0}
+.error{font-size:12px;color:var(--red);margin-top:6px}
+.error:empty{display:none}
+.privacy-note{padding:18px 4px;font-size:11px;line-height:1.9;color:#92a0b3}
+.privacy-note b{color:#718099;font-weight:600}
+.calendar-note{margin:18px 0 0;padding:18px 20px;border:1px solid #e3eaf6;background:#f0f5fd;border-radius:12px;font-size:11px;line-height:1.9;color:#778aa6}
+.calendar-note strong{display:block;color:#54739f;font-size:12px;margin-bottom:4px}
+.empty{padding:52px 25px;text-align:center}
+.empty svg{width:38px;height:38px;color:#a5b7d3;margin-bottom:12px}
+.empty h3{font-size:16px;font-weight:650;margin:0 0 8px}
+.empty p{font-size:12px;line-height:1.8;color:var(--muted);margin:0}
+.warning{margin-bottom:20px;padding:14px 18px;background:#fff4eb;border:1px solid #f1d3bb;color:#95542d;border-radius:10px;font-size:13px;line-height:1.8}
+.warning[hidden], [hidden]{display:none!important}
+.footer{font-size:11px;color:#9aa5b4;display:flex;justify-content:space-between;gap:15px;margin-top:30px;padding-top:18px;border-top:1px solid #e4eaf2;flex-wrap:wrap}
+.footer a{color:#7486a0}
+.toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);background:#223147;color:white;padding:13px 20px;border-radius:10px;box-shadow:0 8px 30px #17233222;font-size:13px;max-width:90%;z-index:20}
+.toast:empty{display:none}
+dialog{padding:28px;border:0;border-radius:18px;max-width:420px;width:calc(100% - 32px);box-shadow:0 20px 80px #0002}
+dialog::backdrop{background:#18263d66;backdrop-filter:blur(4px)}
+dialog h2{font-size:20px;margin:0 0 10px}
+dialog p{font-size:14px;color:#7a879a;overflow-wrap:anywhere}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:24px}
+.dialog-actions button{padding:9px 18px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px}
+.dialog-actions .danger{background:#bd4436;color:white;border:0}
+.skip{position:absolute;left:10px;top:-80px;z-index:30;background:white;padding:10px}
+.skip:focus{top:10px}
+@media(min-width:1600px){.page{padding-top:55px}
+.workspace{grid-template-columns:minmax(0,1fr) 350px}
+.task{padding:24px 28px}
+}
+@media(max-width:1150px){.shell{grid-template-columns:200px minmax(0,1fr)}
+.sidebar{padding:30px 16px}
+.page{padding:30px 25px}
+.topbar{padding:0 25px}
+.workspace{grid-template-columns:minmax(0,1fr) 285px;gap:16px}
+.task{padding:18px}
+.list-header{padding:20px 18px}
+.list-hint{padding:0 18px 16px}
+.form-panel{padding:20px}
+.stat{padding:18px}
+.stats{gap:12px}
+.stat-icon{display:none}
+.hero h1{font-size:30px}
+}
+@media(max-width:900px){.shell{grid-template-columns:175px minmax(0,1fr)}
+.workspace{grid-template-columns:1fr}
+.right-column{grid-row:1}
+.form-panel form{display:grid;grid-template-columns:1.5fr 1fr;gap:0 20px}
+.field:first-child{grid-column:1/-1}
+.form-panel .add{align-self:start;grid-column:1/-1}
+.form-hint{margin-top:12px}
+.form-desc{margin-bottom:18px}
+.privacy-note{display:block;padding:14px 4px}
+.calendar-note{margin-top:16px}
+.form-panel .cancel-edit{grid-column:1/-1}
+.hero{gap:12px}
+.course-tag{font-size:10px}
+.stats{margin:22px 0}
+.stat strong{font-size:27px}
+.stat-label{font-size:11px}
+.stat{padding:15px}
+.sidebar{padding:25px 13px}
+.logo{font-size:16px}
+}
+@media(max-width:620px){.shell{display:block}
+.sidebar{position:relative;height:auto;padding:18px 18px 12px;border-right:0;border-bottom:1px solid var(--line)}
+.sidebar-caption,.side-bottom{display:none}
+.logo{font-size:17px}
+.nav{display:flex;margin-top:16px;gap:4px;overflow-x:auto}
+.nav button{padding:8px 10px;gap:5px;font-size:12px;white-space:nowrap;flex-shrink:0}
+.nav button svg{width:14px;height:14px}
+.nav button .count{font-size:10px;margin-left:3px}
+.topbar{height:48px;padding:0 20px}
+.breadcrumb{font-size:11px}
+.save-indicator{font-size:10px}
+.page{padding:27px 18px}
+.hero{display:block}
+.hero h1{font-size:29px}
+.date{font-size:11px}
+.subtitle{font-size:12px}
+.course-tag{display:inline-block;margin-top:14px}
+.stats{gap:7px;margin:22px 0}
+.stat{padding:15px 12px;border-radius:11px}
+.stat strong{font-size:25px}
+.stat-label{font-size:10px}
+.form-panel form{grid-template-columns:1fr;gap:0}
+.field{margin-bottom:17px}
+.form-panel{padding:21px}
+.form-panel form>*{grid-column:auto!important}
+.form-panel h2{font-size:17px}
+.list-header{padding:20px 18px 15px}
+.list-header h2{font-size:17px}
+.sort{font-size:11px;max-width:114px}
+.task{gap:10px;padding:18px}
+.task-title{font-size:14px}
+.task-actions{gap:13px}
+.priority{font-size:9px}
+.task-meta{font-size:10px}
+.footer{line-height:1.8}
+.nav button.active{background:#edf3ff}
+.empty{padding:40px 20px}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}
+}
+
+</style>
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+<div class="shell">
+<aside class="sidebar">
+<a class="logo" href="./">
+<span class="logo-icon">✓</span>
+<span>daynote<span style="color:#246bfd">.</span>
+</span>
+</a>
+<p class="sidebar-caption">MY WORKSPACE</p>
+<nav class="nav" aria-label="업무 보기">
+<button class="active" data-filter="all">
+<span data-icon="grid">
+</span>전체 업무<span class="count" id="count-all">0</span>
+</button>
+<button data-filter="today">
+<span data-icon="calendar">
+</span>오늘 마감<span class="count" id="count-today">0</span>
+</button>
+<button data-filter="overdue">
+<span data-icon="clock">
+</span>기한 지남<span class="count" id="count-overdue">0</span>
+</button>
+<button data-filter="done">
+<span data-icon="check">
+</span>완료한 업무<span class="count" id="count-done">0</span>
+</button>
+</nav>
+<div class="side-bottom">
+<a href="../">← 교육 슬라이드 돌아가기</a>
+<div class="side-note">
+<strong>작은 정리, 가벼운 하루.</strong>
+<br>내 업무를 놓치지 않도록<br>한곳에서 관리해 보세요.</div>
+</div>
+</aside>
+<main class="main" id="main">
+<header class="topbar">
+<div class="breadcrumb">내 워크스페이스<span>/</span>업무 플래너</div>
+<div class="save-indicator" id="saveIndicator">
+<i class="save-dot">
+</i>
+<span>이 브라우저에 저장</span>
+</div>
+</header>
+<div class="page">
+<div id="storageWarning" class="warning" role="alert" hidden>
+</div>
+<section class="hero">
+<div>
+<p class="date" id="todayDate">
+</p>
+<h1>오늘도, 하나씩 차근차근.</h1>
+<p class="subtitle">해야 할 일부터 마감일까지. 나만의 업무 흐름을 만들어 보세요.</p>
+</div>
+<span class="course-tag">AI Studio 교육 · 완성 예시</span>
+</section>
+<section class="stats" aria-label="업무 현황">
+<div class="stat">
+<div>
+<div class="stat-label">해야 할 일</div>
+<strong id="statPending">0</strong>
+</div>
+<div class="stat-icon" data-icon="stack">
+</div>
+</div>
+<div class="stat">
+<div>
+<div class="stat-label">오늘 마감</div>
+<strong id="statToday">0</strong>
+</div>
+<div class="stat-icon" data-icon="calendar">
+</div>
+</div>
+<div class="stat urgent">
+<div>
+<div class="stat-label">기한 지남</div>
+<strong id="statOverdue">0</strong>
+</div>
+<div class="stat-icon" data-icon="clock">
+</div>
+</div>
+</section>
+<div class="workspace">
+<section class="panel">
+<header class="list-header">
+<h2 id="listTitle">전체 업무 <span id="visibleCount">0개</span>
+</h2>
+<label>
+<span class="sr" hidden>정렬</span>
+<select class="sort" id="sort" aria-label="업무 정렬">
+<option value="due">마감일순</option>
+<option value="priority">우선순위순</option>
+<option value="new">최근 등록순</option>
+</select>
+</label>
+</header>
+<p class="list-hint" id="listHint">완료한 업무는 목록 아래에 모아 보여드려요.</p>
+<div id="taskList">
+</div>
+</section>
+<div class="right-column">
+<section class="panel form-panel" id="formPanel">
+<h2 id="formTitle">새 업무 등록</h2>
+<p class="form-desc" id="formDescription">생각난 일을 지금 적어두세요.</p>
+<form id="taskForm" novalidate>
+<div class="field">
+<label for="taskTitle">업무명</label>
+<input id="taskTitle" type="text" placeholder="어떤 일을 해야 하나요?" maxlength="100" autocomplete="off" aria-describedby="titleError" required>
+<div class="error" id="titleError" role="alert">
+</div>
+</div>
+<div class="field">
+<label for="taskDue">마감일 <small>선택</small>
+</label>
+<input id="taskDue" type="date" min="1900-01-01" max="9998-12-31" aria-describedby="dateError">
+<div class="error" id="dateError" role="alert">
+</div>
+</div>
+<fieldset class="field">
+<legend>우선순위</legend>
+<div class="priority-options">
+<label>
+<input type="radio" name="priority" value="high">
+<span>높음</span>
+</label>
+<label>
+<input type="radio" name="priority" value="medium" checked>
+<span>보통</span>
+</label>
+<label>
+<input type="radio" name="priority" value="low">
+<span>낮음</span>
+</label>
+</div>
+</fieldset>
+<button type="submit" class="add" id="submitButton">＋ 업무 등록</button>
+<button type="button" class="cancel-edit" id="cancelEdit" hidden>수정 취소</button>
+</form>
+<p class="form-hint">업무는 이 브라우저에 자동으로 저장됩니다.<br>새로고침한 뒤에도 이어서 확인할 수 있어요.</p>
+</section>
+<div class="calendar-note">
+<strong>마감일을 Google 캘린더에도.</strong>캘린더 버튼은 업무명·우선순위·날짜를 Google 일정 작성 화면에 전달합니다. 내용을 확인한 뒤 직접 저장하세요. 이후 변경은 자동 동기화되지 않습니다.</div>
+<div class="calendar-note">
+<strong>네이버 캘린더에는 일정 파일로.</strong>업무의 ‘네이버용 .ics’를 누르면 마감일의 종일 일정 파일을 내려받습니다. PC 네이버 캘린더의 가져오기에서 파일을 선택하고 일정을 확인하세요. 파일에는 업무명·우선순위·완료 상태가 포함됩니다. 자동 등록·동기화되지 않으며, 다시 가져오기 전 중복 일정을 확인하세요.<br>
+<a href="https://calendar.naver.com/" target="_blank" rel="noopener noreferrer">네이버 캘린더 열기 ↗</a>
+</div>
+<div class="privacy-note">
+<b>저장 안내</b>
+<br>다른 기기·브라우저와 동기화되지 않습니다. 사이트 데이터 삭제나 시크릿 창 종료 시 사라질 수 있습니다. 교육용 예시 업무는 실제 일정이 아닙니다.</div>
+</div>
+</div>
+<footer class="footer">
+<span>예시 업무로 먼저 사용해 보세요. 실제 개인정보·회사 기밀은 입력하지 마세요.</span>
+<a href="../">교육자료로 돌아가기 ↗</a>
+</footer>
+</div>
+</main>
+</div>
+<dialog id="deleteDialog" aria-labelledby="deleteTitle">
+<h2 id="deleteTitle">이 업무를 삭제할까요?</h2>
+<p id="deleteText">
+</p>
+<p>이 브라우저의 업무 목록에서 삭제됩니다.</p>
+<div class="dialog-actions">
+<button id="cancelDelete">취소</button>
+<button class="danger" id="confirmDelete">삭제</button>
+</div>
+</dialog>
+<div id="toast" class="toast" role="status" aria-live="polite">
+</div>
+<noscript>
+<p>업무 등록과 브라우저 저장을 사용하려면 JavaScript를 켜 주세요.</p>
+</noscript>
+<script>
+'use strict';
+const ICONS={grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 11h18M8 15h3"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',check:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',stack:'<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 8h6M9 12h6M9 16h4"/>',edit:'<path d="m15 4 5 5M4 20l4-1L20 7a2 2 0 0 0-4-4L4 15v5Z"/>',trash:'<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/>'};
+const svg=name=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[name]+'</svg>';
+document.querySelectorAll('[data-icon]').forEach(e=>e.innerHTML=svg(e.dataset.icon));
+const KEY='aistudio-work-planner-demo-v1';const PRIORITY={high:'높음',medium:'보통',low:'낮음'};const FILTERS={all:'전체 업무',today:'오늘 마감',overdue:'기한 지남',done:'완료한 업무'};
+const $=id=>document.getElementById(id);const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function localDate(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function shiftedDate(days){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+days);return localDate(d);}
+function validDate(s){if(s==='')return true;if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const [y,m,d]=s.split('-').map(Number);if(y<1900||y>9998)return false;const test=new Date(y,m-1,d,12);return test.getFullYear()===y&&test.getMonth()===m-1&&test.getDate()===d;}
+function nextDate(s){const [y,m,d]=s.split('-').map(Number);return localDate(new Date(y,m-1,d+1,12));}
+let tasks=[],filter='all',editingId=null,deleteId=null,storageLocked=false,storageAvailable=true;
+function seed(){return [{id:crypto.randomUUID(),title:'견적서 초안 작성',due:localDate(),priority:'high',done:false,sample:true,createdAt:Date.now()-3000},{id:crypto.randomUUID(),title:'주간 회의 자료 확인',due:shiftedDate(1),priority:'medium',done:false,sample:true,createdAt:Date.now()-2000},{id:crypto.randomUUID(),title:'지난 프로젝트 메모 정리',due:shiftedDate(-1),priority:'low',done:false,sample:true,createdAt:Date.now()-1000},{id:crypto.randomUUID(),title:'참고 자료 모아두기',due:localDate(),priority:'medium',done:true,sample:true,createdAt:Date.now()}];}
+function validateStored(raw){if(!raw||raw.version!==1||!Array.isArray(raw.tasks))throw new Error('format');const ids=new Set();for(const t of raw.tasks){if(!t||typeof t.id!=='string'||ids.has(t.id)||typeof t.title!=='string'||!t.title.trim()||t.title.length>100||typeof t.due!=='string'||!validDate(t.due)||!Object.hasOwn(PRIORITY,t.priority)||typeof t.done!=='boolean'||!Number.isFinite(t.createdAt))throw new Error('task');ids.add(t.id);}return raw.tasks;}
+function storageWarning(text){storageAvailable=false;$('storageWarning').hidden=false;$('storageWarning').textContent=text;$('saveIndicator').innerHTML='<span style="color:#a36039">저장 상태 확인 필요</span>';}
+function persist(){if(storageLocked)return false;try{localStorage.setItem(KEY,JSON.stringify({version:1,tasks}));storageAvailable=true;$('storageWarning').hidden=true;$('saveIndicator').innerHTML='<i class="save-dot"></i><span>이 브라우저에 저장</span>';return true;}catch{storageWarning('저장되지 않았습니다. 브라우저 저장이 차단됐거나 공간이 부족할 수 있습니다. 현재 화면에서는 사용할 수 있지만 새로고침하면 변경 내용이 사라질 수 있습니다.');return false;}}
+function load(){let raw;try{raw=localStorage.getItem(KEY);}catch{storageLocked=true;tasks=seed();storageWarning('브라우저 저장에 접근할 수 없습니다. 예시를 임시로 표시합니다. 변경 내용은 새로고침하면 사라질 수 있습니다.');return;}if(raw===null){tasks=seed();persist();return;}try{tasks=validateStored(JSON.parse(raw));}catch{storageLocked=true;tasks=[];storageWarning('기존 저장 내용을 읽을 수 없습니다. 원본을 덮어쓰지 않고 보존했습니다. 새 업무는 현재 화면에서만 사용할 수 있으며 저장되지 않습니다.');}}
+let toastTimer;function toast(s){$('toast').textContent=s;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').textContent='',3500);}
+function commit(message){const saved=persist();render();toast(saved?message:message+' · 이 화면에만 반영됨');}
+function calendarURL(t){if(!t.due||!validDate(t.due))return null;const params=new URLSearchParams({action:'TEMPLATE',text:t.title,dates:t.due.replaceAll('-','')+'/'+nextDate(t.due).replaceAll('-',''),details:'업무 플래너에서 추가한 일정\n우선순위: '+PRIORITY[t.priority]+'\n플래너 변경 사항은 자동 동기화되지 않습니다.'});return 'https://calendar.google.com/calendar/r/eventedit?'+params.toString();}
+// RFC 5545: escape text, fold UTF-8 lines, and use an exclusive end date.
+function icsText(value){return String(value).replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/;/g,'\\;').replace(/,/g,'\\,');}
+function foldICS(line){const encoder=new TextEncoder();let result='',bytes=0;for(const character of line){const size=encoder.encode(character).length;if(bytes+size>75){result+='\r\n ';bytes=1;}result+=character;bytes+=size;}return result;}
+function calendarICS(t){
+ if(!t.due||!validDate(t.due))return null;
+ const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
+ return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Daynote//Work Planner//KO','CALSCALE:GREGORIAN','BEGIN:VEVENT',
+ 'UID:'+icsText(encodeURIComponent(t.id)+'@daynote.local'),'DTSTAMP:'+stamp,
+ 'DTSTART;VALUE=DATE:'+t.due.replaceAll('-',''),'DTEND;VALUE=DATE:'+nextDate(t.due).replaceAll('-',''),
+ 'SUMMARY:'+icsText(t.title),'DESCRIPTION:'+icsText('업무 플래너에서 내보낸 일정\n우선순위: '+PRIORITY[t.priority]+'\n완료 상태: '+(t.done?'완료':'미완료')+'\n변경 사항은 자동 동기화되지 않습니다.'),
+ 'CLASS:PRIVATE','TRANSP:TRANSPARENT','END:VEVENT','END:VCALENDAR'].map(foldICS).join('\r\n')+'\r\n';
+}
+function downloadCalendar(t){
+ const content=calendarICS(t);if(!content){toast('마감일을 먼저 설정해 주세요.');return;}
+ try{const blob=new Blob([content],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download='daynote-'+t.due+'.ics';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ toast('일정 파일 다운로드를 요청했습니다. 네이버 캘린더에서 가져오세요.');
+ }catch{toast('일정 파일을 만들지 못했습니다. 다시 시도해 주세요.');}
+}
+function dateText(s){if(!s)return '마감일 없음';const [y,m,d]=s.split('-');return y+'. '+Number(m)+'. '+Number(d)+'.';}
+function taskStatus(t){if(t.done)return {label:'완료',css:'complete'};if(!t.due)return {label:'',css:''};if(t.due<localDate())return {label:'기한 지남',css:'overdue'};if(t.due===localDate())return {label:'오늘 마감',css:'today'};return {label:'',css:''};}
+function isVisible(t){return filter==='all'||(filter==='done'?t.done:!t.done&&(filter==='today'?t.due===localDate():t.due&&t.due<localDate()));}
+function render(){const today=localDate(),pending=tasks.filter(t=>!t.done),todays=pending.filter(t=>t.due===today),late=pending.filter(t=>t.due&&t.due<today);$('todayDate').textContent=new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date());$('statPending').textContent=pending.length;$('statToday').textContent=todays.length;$('statOverdue').textContent=late.length;Object.entries({all:tasks.length,today:todays.length,overdue:late.length,done:tasks.length-pending.length}).forEach(([k,n])=>$('count-'+k).textContent=n);document.querySelectorAll('[data-filter]').forEach(b=>{const active=b.dataset.filter===filter;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});const sort=$('sort').value;const rank={high:0,medium:1,low:2};const visible=tasks.filter(isVisible).sort((a,b)=>Number(a.done)-Number(b.done)||(sort==='priority'?rank[a.priority]-rank[b.priority]:sort==='new'?b.createdAt-a.createdAt:(a.due||'9999').localeCompare(b.due||'9999'))||b.createdAt-a.createdAt);$('listTitle').innerHTML=FILTERS[filter]+' <span>'+visible.length+'개</span>';$('listHint').textContent=filter==='all'?'완료한 업무는 목록 아래에 모아 보여드려요.':filter==='today'?'오늘 마감인 미완료 업무만 보여드려요.':filter==='overdue'?'마감일이 지난 미완료 업무만 보여드려요.':'완료한 일도 다시 체크를 해제할 수 있어요.';
+$('taskList').innerHTML=visible.length?visible.map(t=>{const status=taskStatus(t),url=calendarURL(t);return '<article class="task '+(t.done?'done':'')+'" data-id="'+escapeHTML(t.id)+'"><input class="done-check" type="checkbox" '+(t.done?'checked':'')+' aria-label="'+escapeHTML(t.title)+' 완료 여부"><div><div class="task-head"><span class="task-title">'+escapeHTML(t.title)+'</span><span class="priority '+t.priority+'">'+PRIORITY[t.priority]+'</span></div><div class="task-meta"><span>'+dateText(t.due)+'</span>'+(status.label?'<span class="status '+status.css+'">'+status.label+'</span>':'')+(t.sample?'<span class="sample">교육용 예시</span>':'')+'</div><div class="task-actions">'+(url?'<a href="'+escapeHTML(url)+'" target="_blank" rel="noopener noreferrer" aria-label="'+escapeHTML(t.title)+' Google 캘린더 일정 작성">'+svg('calendar')+'Google 캘린더</a>':'<button disabled title="마감일을 먼저 설정하세요">마감일 설정 후 캘린더 추가</button>')+(url?'<button data-action="naver" aria-label="'+escapeHTML(t.title)+' 네이버 캘린더용 일정 파일 다운로드">'+svg('calendar')+'네이버용 .ics</button>':'<button disabled title="마감일을 먼저 설정하세요">네이버용 .ics</button>')+'<button data-action="edit" aria-label="'+escapeHTML(t.title)+' 수정">'+svg('edit')+'수정</button><button data-action="delete" class="delete" aria-label="'+escapeHTML(t.title)+' 삭제">'+svg('trash')+'삭제</button></div></div></article>';}).join(''):'<div class="empty">'+svg('check')+'<h3>'+(filter==='all'?'첫 업무를 등록해 보세요.':filter==='done'?'완료한 업무가 아직 없어요.':filter==='today'?'오늘 마감인 업무가 없어요.':'기한이 지난 업무가 없어요.')+'</h3><p>'+(filter==='all'?'업무명과 우선순위를 정하고<br>새 업무를 등록해 보세요.':'다른 목록을 선택하면 나머지 업무를 볼 수 있어요.')+'</p></div>';}
+function resetForm(){$('taskForm').reset();editingId=null;$('formTitle').textContent='새 업무 등록';$('formDescription').textContent='생각난 일을 지금 적어두세요.';$('submitButton').textContent='＋ 업무 등록';$('cancelEdit').hidden=true;$('titleError').textContent='';$('dateError').textContent='';$('taskTitle').removeAttribute('aria-invalid');$('taskDue').removeAttribute('aria-invalid');}
+$('taskForm').addEventListener('submit',e=>{e.preventDefault();const title=$('taskTitle').value.trim(),due=$('taskDue').value,priority=document.querySelector('input[name=priority]:checked').value;$('titleError').textContent='';$('dateError').textContent='';$('taskTitle').removeAttribute('aria-invalid');$('taskDue').removeAttribute('aria-invalid');if(!title){$('titleError').textContent='업무명을 입력해 주세요.';$('taskTitle').setAttribute('aria-invalid','true');$('taskTitle').focus();return;}if(!validDate(due)||$('taskDue').validity.badInput){$('dateError').textContent='올바른 마감일을 선택해 주세요.';$('taskDue').setAttribute('aria-invalid','true');$('taskDue').focus();return;}const edit=editingId!==null;if(edit){const target=tasks.find(t=>t.id===editingId);if(!target){toast('수정할 업무를 찾을 수 없습니다.');resetForm();return;}Object.assign(target,{title,due,priority,sample:false});}else{tasks.push({id:crypto.randomUUID(),title,due,priority,done:false,sample:false,createdAt:Date.now()});filter='all';}resetForm();commit(edit?'업무를 수정했습니다.':'새 업무를 등록했습니다.');$('taskTitle').focus();});
+$('cancelEdit').onclick=resetForm;$('sort').onchange=render;document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render();});
+$('taskList').addEventListener('change',e=>{if(!e.target.matches('.done-check'))return;const id=e.target.closest('.task').dataset.id,t=tasks.find(t=>t.id===id);if(t){t.done=e.target.checked;commit(t.done?'업무를 완료했습니다.':'다시 진행할 업무로 변경했습니다.');const next=[...document.querySelectorAll('.task')].find(x=>x.dataset.id===id);if(next)next.querySelector('.done-check').focus({preventScroll:true});}});
+let deleteFocus=null;$('taskList').addEventListener('click',e=>{const button=e.target.closest('button[data-action]');if(!button)return;const id=button.closest('.task').dataset.id,t=tasks.find(t=>t.id===id);if(!t)return;if(button.dataset.action==='naver'){downloadCalendar(t);return;}if(button.dataset.action==='edit'){editingId=id;$('taskTitle').value=t.title;$('taskDue').value=t.due;document.querySelector('input[name=priority][value="'+t.priority+'"]').checked=true;$('formTitle').textContent='업무 수정';$('formDescription').textContent='필요한 내용을 바꾸고 저장하세요.';$('submitButton').textContent='변경 내용 저장';$('cancelEdit').hidden=false;$('titleError').textContent='';$('dateError').textContent='';$('formPanel').scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});$('taskTitle').focus({preventScroll:true});}else{deleteId=id;deleteFocus=button;$('deleteText').textContent=t.title;$('deleteDialog').showModal();$('cancelDelete').focus();}});
+$('cancelDelete').onclick=()=>$('deleteDialog').close();$('deleteDialog').addEventListener('close',()=>{deleteId=null;if(deleteFocus?.isConnected)deleteFocus.focus();});$('confirmDelete').onclick=()=>{if(deleteId){tasks=tasks.filter(t=>t.id!==deleteId);if(editingId===deleteId)resetForm();$('deleteDialog').close();commit('업무를 삭제했습니다.');$('taskTitle').focus({preventScroll:true});}};
+window.addEventListener('storage',e=>{if(e.key!==KEY||storageLocked)return;if(e.newValue===null){tasks=[];resetForm();render();toast('다른 탭에서 저장 데이터가 삭제됐습니다.');return;}try{tasks=validateStored(JSON.parse(e.newValue));render();}catch{storageLocked=true;storageWarning('다른 탭의 저장 내용을 읽을 수 없습니다. 기존 데이터를 덮어쓰지 않습니다.');}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});setInterval(render,60000);load();render();
+</script></body>
+</html>
